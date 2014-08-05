@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-cn" class="no-js">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<meta name="language" content="en" />
+        <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+
+
+        <link rel="shortcut icon" href="images/favicon.ico" />
+
+		<!--link rel="stylesheet" type="text/css" href="/demo.css"/-->
+
+        <script type="text/javascript" src="jquery.js"></script>
+        <script type="text/javascript" src="jquery.uploader.js"></script>
+
+        <title>jQuery Uploader Demo</title>
+        <style>
+            .ju-uploading:after {
+                content: 'uploading...';
+            }
+            .ju-removing:after {
+                content: 'removing...';
+            }
+
+
+
+body {
+    font-size: 14px;
+}   
+h3 {
+    font-size: 27px;
+    margin-top: 50px
+}
+
+pre {
+    background-color: #e4e4e4;
+    border: 1px solid #bababa;
+    color: #000000;
+    display: block;
+    display: none;overflow-x: scroll;
+    width: 600px;
+}
+
+#div2 .fileinput-button input {
+    cursor: pointer;
+    direction: ltr;
+    font-size: 200px;
+    margin: 0;
+    opacity: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    filter: alpha(opacity=0); HEIGHT: 100%;
+}
+#div2 input[type="file"] {
+    display: block;
+}
+#div2 .fileupload-buttonbar .btn, .fileupload-buttonbar .toggle {
+    margin-bottom: 5px;
+}
+#div2 .fileinput-button {
+    overflow: hidden;
+    position: relative;
+}
+#div2 .btn-success {
+    background-color: #5cb85c;
+    border-color: #4cae4c;
+    color: #fff;
+}
+#div2 .btn {
+    -moz-user-select: none;
+    background-image: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.42857;
+    margin-bottom: 0;
+    padding: 6px 12px;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+#div2 .btn-primary {
+    background-color: #428bca;
+    border-color: #357ebd;
+    color: #fff;
+}
+#div2 .btn-danger {
+    background-color: #d9534f;
+    border-color: #d43f3a;
+    color: #fff;
+}
+#div2 #ul2 {
+    padding: 0;
+    width: 870px;
+}   
+#div2 #ul2 li {
+    border-top: 1px solid #cfcfcf;
+    list-style: none outside none;
+    margin: 0;
+    padding: 5px;
+}
+#div2 #ul2 span.name {
+    display: inline-block;
+    width: 530px;
+    margin-left: 20px;
+}
+#div2 #ul2 span.size {
+    display: inline-block;
+    margin-right: 80px;
+    text-align: right;
+    width: 130px
+}
+        </style>
+	</head>
+
+	<body>
+        <h3># Simple Demo without css</h3> 
+        <ul id="ul1"></ul>
+        <hr />
+        <div id="div1">
+            <input type="file" id="file1" name="myfile" />
+            <input type="button" id="btn1" value="upload" />
+        </div>
+<a href="javascript:;" class='view-source'>View Source</a>
+<pre>
+$('#btn1').uploader({
+    url: "server/upload.php?id=btn1",
+    fileElement: 'file1',
+    list: {
+        element: 'ul1',
+        allowDelete: true,
+        deleteUrl: 'server/delete.php',
+        ajaxParams: ['id', 'ext'],
+    }
+}).init();
+</pre>
+
+
+        <h3># Demo with css</h3> 
+        <div id="div2">
+            <span class="btn btn-success fileinput-button">
+                <span>+ Select File...</span>
+                <input type="file" id="file2" name="myfile">
+            </span>
+
+            <!--input type="file" id="file2" name="myfile" /-->
+            <button class="btn btn-primary start" id="btn2">
+                <span>Upload</span>
+            </button>
+            <ul id="ul2"></ul>
+        </div>
+<a href="javascript:;" class='view-source'>View Source</a>
+<pre>
+$('#btn2').uploader({
+    url: "server/upload.php?id=btn2",
+    fileElement: 'file2',
+    list: {
+        element: 'ul2',
+        allowDelete: true,
+        deleteUrl: 'server/delete.php',
+        ajaxParams: ['id', 'ext'],
+        fileTemplate: '&lt;span class="name">{name}&lt;/span>&lt;span class="size">{size}&lt;/span>',
+        deleteButtonTemplate: '&lt;button class="btn btn-danger delete" type="button">&lt;i class="glyphicon glyphicon-trash">&lt;/i>&lt;span>Delete&lt;/span>&lt;/button>',
+    },
+    onSelect: function (name) {
+        $(this.uploadButton).find('span').html('Upload (' + name + ')');
+    },
+    beforeUpload: function () {
+        $(this.uploadButton).find('span').html('Uploading');
+    },
+    afterUpload: function (rst) {
+        $(this.uploadButton).find('span').html('Upload');
+    },
+}).init();
+</pre>
+
+        <script>
+        // Demo 1
+        $('#btn1').uploader({
+            url: "server/upload.php?id=btn1",
+            fileElement: 'file1',
+            list: {
+                element: 'ul1',
+                allowDelete: true,
+                deleteUrl: 'server/delete.php',
+                ajaxParams: ['id', 'ext'],
+            }
+        }).init();
+
+        // Demo 2
+        $('#btn2').uploader({
+            url: "server/upload.php?id=btn2",
+            fileElement: 'file2',
+            list: {
+                element: 'ul2',
+                allowDelete: true,
+                deleteUrl: 'server/delete.php',
+                ajaxParams: ['id', 'ext'],
+                fileTemplate: '<span class="name">{name}</span><span class="size">{size} Kb</span>',
+                deleteButtonTemplate: '<button class="btn btn-danger delete" type="button"><i class="glyphicon glyphicon-trash"></i><span>Delete</span></button>',
+            },
+            onSelect: function (name) {
+                $(this.uploadButton).find('span').html('Upload (' + name + ')');
+            },
+            beforeUpload: function () {
+                $(this.uploadButton).find('span').html('Uploading');
+            },
+            afterUpload: function (rst) {
+                $(this.uploadButton).find('span').html('Upload');
+            },
+            dataFilter: function (rst) {
+                rst.fileSize = Math.ceil(rst.fileSize * 100 / 1024) / 100;
+                return rst;
+            } 
+        }).init();
+
+
+        $('.view-source').click(function () {
+            $(this).next().toggle();
+        })
+        </script>
+    </body>
+</html>
+
