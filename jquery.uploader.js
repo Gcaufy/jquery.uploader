@@ -61,8 +61,24 @@
 		},
 		// It's a call back from the server,
 		success: function (rst) { 
+			this.addFile(rst);
+			if (typeof(c.success) === 'function') {
+				c.success.call(this, rst);
+			}
+			if (typeof(c.afterUpload) === 'function') {
+				c.afterUpload.call(this, rst);
+			}
+		},
+		// It's a call back from the server,
+		addFile: function (rst) { 
 			var c = this.config, ul = null, li = null, len = 0, key = '', tmp = null, data = {}, me = null, self = this, a = null;
 			self.fileElement.val('');
+			if (rst.length !== undefined) {
+				for(key in rst) {
+					this.addFile(rst[key]);
+				}
+				return this;
+			}
 			if (typeof(c.dataFilter) === 'function') {
 				rst = c.dataFilter.call(self, rst);
 			}
@@ -139,12 +155,6 @@
 						li.attr(key, rst[key]);
 					}
 				}
-			}
-			if (typeof(c.success) === 'function') {
-				c.success.call(this, rst);
-			}
-			if (typeof(c.afterUpload) === 'function') {
-				c.afterUpload.call(this, rst);
 			}
 		},
 		// It's a call back from the server,
