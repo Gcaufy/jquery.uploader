@@ -114,6 +114,89 @@ pre {
     text-align: right;
     width: 130px
 }
+
+
+
+#div3 .pic-holder {
+    border: 1px solid #cccccc;
+    width: 850px;
+    background-color: #eeeeee;
+    border-radius: 8px;
+}
+#div3 .pic-items, #div3 .pic-uploader {
+    border: 1px solid #cccccc;
+    display: inline-block;
+    height: 200px;
+    margin: 5px;
+    padding: 0;
+    width: 200px;
+    float: left;
+    position: relative;
+    background-color: #cccccc;
+}
+#div3 .clear {
+    display: block;
+    clear: both;
+}
+#div3 .pic-items img {
+    width: 200px;
+    height: 170px;
+}
+.pic-items div {
+    background-color: #cccccc;
+    height: 20px;
+    line-height: 22px;
+    overflow: hidden;
+    padding: 3px;
+    overflow: hidden;
+    white-space: nowrap;
+    word-break: keep-all;
+    margin: -4px 0 0;
+}
+.pic-items a {
+    background-color: #333333;
+    border-radius: 15px;
+    color: white;
+    font-weight: bold;
+    height: 8px;
+    line-height: 8px;
+    padding: 5px;
+    position: absolute;
+    right: 5px;
+    text-align: center;
+    text-decoration: none;
+    width: 8px;
+    top: 3px;
+    opacity: 0.3;
+}
+.pic-items a:hover {
+    background-color: red;
+    opacity: 0.8;
+}
+#div3 .pic-uploader {
+    position: relative;
+    text-align: center;
+    overflow: hidden;
+}
+#div3 .pic-uploader input{
+    background-color: #EEEEEE;
+    cursor: pointer;
+    direction: ltr;
+    font-size: 200px;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+}
+
+#div3 .pic-uploader span {
+    font-size: 16px;
+    position: relative;
+    top: 85px;
+}
+
         </style>
 	</head>
 
@@ -127,9 +210,11 @@ pre {
         </div>
 <a href="javascript:;" class='view-source'>View Source</a>
 <pre>
-$('#btn1').uploader({
-    url: "server/upload.php?id=btn1",
-    fileElement: 'file1',
+$('#file1').uploader({
+    url: "server/upload.php?id=file1",
+    //fileElement: 'file1',
+    uploadTriggeredButton: 'btn1',
+    allowFiles: 'jpg,gif,png,jpge,bmp',
     list: {
         element: 'ul1',
         allowDelete: true,
@@ -140,7 +225,7 @@ $('#btn1').uploader({
 </pre>
 
 
-        <h3># Demo with css</h3> 
+        <h3># Demo template 1</h3> 
         <div id="div2">
             <span class="btn btn-success fileinput-button">
                 <span>+ Select File...</span>
@@ -153,17 +238,24 @@ $('#btn1').uploader({
             </button>
             <ul id="ul2"></ul>
         </div>
+
 <a href="javascript:;" class='view-source'>View Source</a>
 <pre>
-$('#btn2').uploader({
-    url: "server/upload.php?id=btn2",
-    fileElement: 'file2',
+$('#file2').uploader({
+    url: "server/upload.php?id=file2",
+    //fileElement: 'file2',
+    uploadTriggeredButton: 'btn2',
+    allowFiles: 'jpg,gif,png,jpge,bmp',
+    onValidateFailed: function (name) {
+        alert('Only "jpg,gif,png,jpge,bmp" is allowed');
+        return false;
+    },
     list: {
         element: 'ul2',
         allowDelete: true,
         deleteUrl: 'server/delete.php',
         ajaxParams: ['id', 'ext'],
-        fileTemplate: '&lt;span class="name">{name}&lt;/span>&lt;span class="size">{size}&lt;/span>',
+        fileTemplate: '&lt;span class="name">{name}&lt;/span>&lt;span class="size">{zise} Kb&lt;/span>',
         deleteButtonTemplate: '&lt;button class="btn btn-danger delete" type="button">&lt;i class="glyphicon glyphicon-trash">&lt;/i>&lt;span>Delete&lt;/span>&lt;/button>',
     },
     onSelect: function (name) {
@@ -175,14 +267,72 @@ $('#btn2').uploader({
     afterUpload: function (rst) {
         $(this.uploadButton).find('span').html('Upload');
     },
+    dataFilter: function (rst) {
+        rst.zise = Math.ceil(rst.zise * 100 / 1024) / 100;
+        return rst;
+    }
+}).init();
+</pre>
+
+
+
+        <h3># Demo template 2</h3> 
+        <div id="div3">
+            <div id="ul3" class="pic-holder">
+                <div class="pic-uploader">
+                    <span>+ Select File...</span>
+                    <input type="file" id="file3" name="myfile">
+                </div>
+                <div class="clear"></div>
+            </div>
+        </div>
+
+<a href="javascript:;" class='view-source'>View Source</a>
+<pre>
+$('#file3').uploader({
+    url: "server/upload.php?id=file3",
+    allowFiles: 'jpg,gif,png,jpge,bmp',
+    onValidateFailed: function (name) {
+        alert('Only "jpg,gif,png,jpge,bmp" is allowed');
+        return false;
+    },
+    list: {
+        element: 'ul3',
+        liTemplate: '&lt;div class="pic-items">&lt;/div>',
+        //insertWay: 'prepend',
+        insertWay: function (ul, li) {
+            ul.find('.pic-uploader').before(li);
+        },
+        allowDelete: true,
+        deleteUrl: 'server/delete.php',
+        ajaxParams: ['id', 'ext'],
+        fileTemplate: '&lt;img src="server/{id}.{ext}" />&lt;div>{name}({zise} Kb)&lt;/div>',
+        deleteButtonTemplate: '&lt;a href="javascript:;">X&lt;/a>'
+    },
+    beforeUpload: function () {
+        $(this.fileElement).parents('.pic-uploader').find('span').html('Uploading');
+    },
+    afterUpload: function (rst) {
+        $(this.fileElement).parents('.pic-uploader').find('span').html('+ Select File...');
+    },
+    onValidateFailed: function (name) {
+        alert('Only "jpg,gif,png,jpge,bmp" is allowed');
+        return false;
+    }
 }).init();
 </pre>
 
         <script>
         // Demo 1
-        $('#btn1').uploader({
-            url: "server/upload.php?id=btn1",
-            fileElement: 'file1',
+        $('#file1').uploader({
+            url: "server/upload.php?id=file1",
+            //fileElement: 'file1',
+            uploadTriggeredButton: 'btn1',
+            allowFiles: 'jpg,gif,png,jpge,bmp',
+            onValidateFailed: function (name) {
+                alert('Only "jpg,gif,png,jpge,bmp" is allowed');
+                return false;
+            },
             list: {
                 element: 'ul1',
                 allowDelete: true,
@@ -192,13 +342,20 @@ $('#btn2').uploader({
         }).init();
 
         // Demo 2
-        $('#btn2').uploader({
-            url: "server/upload.php?id=btn2",
-            fileElement: 'file2',
+        $('#file2').uploader({
+            url: "server/upload.php?id=file2",
+            //fileElement: 'file2',
+            uploadTriggeredButton: 'btn2',
+            allowFiles: 'jpg,gif,png,jpge,bmp',
+            onValidateFailed: function (name) {
+                alert('Only "jpg,gif,png,jpge,bmp" is allowed');
+                return false;
+            },
             list: {
                 element: 'ul2',
                 allowDelete: true,
                 deleteUrl: 'server/delete.php',
+                allowFiles: 'jpg,gif,png,jpge,bmp',
                 ajaxParams: ['id', 'ext'],
                 fileTemplate: '<span class="name">{name}</span><span class="size">{size} Kb</span>',
                 deleteButtonTemplate: '<button class="btn btn-danger delete" type="button"><i class="glyphicon glyphicon-trash"></i><span>Delete</span></button>',
@@ -213,9 +370,38 @@ $('#btn2').uploader({
                 $(this.uploadButton).find('span').html('Upload');
             },
             dataFilter: function (rst) {
-                rst.fileSize = Math.ceil(rst.fileSize * 100 / 1024) / 100;
+                rst.zise = Math.ceil(rst.zise * 100 / 1024) / 100;
                 return rst;
-            } 
+            }
+        }).init();
+
+        // Demo 2
+        $('#file3').uploader({
+            url: "server/upload.php?id=file3",
+            allowFiles: 'jpg,gif,png,jpge,bmp',
+            list: {
+                element: 'ul3',
+                liTemplate: '<div class="pic-items"></div>',
+                //insertWay: 'prepend',
+                insertWay: function (ul, li) {
+                    ul.find('.pic-uploader').before(li);
+                },
+                allowDelete: true,
+                deleteUrl: 'server/delete.php',
+                ajaxParams: ['id', 'ext'],
+                fileTemplate: '<img src="{url}" /><div>{name}({zise} Kb)</div>',
+                deleteButtonTemplate: '<a href="javascript:;">X</a>'
+            },
+            beforeUpload: function () {
+                $(this.fileElement).parents('.pic-uploader').find('span').html('Uploading');
+            },
+            afterUpload: function (rst) {
+                $(this.fileElement).parents('.pic-uploader').find('span').html('+ Select File...');
+            },
+            onValidateFailed: function (name) {
+                alert('Only "jpg,gif,png,jpge,bmp" is allowed');
+                return false;
+            }
         }).init();
 
 

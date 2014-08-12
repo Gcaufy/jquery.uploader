@@ -10,7 +10,7 @@
  */
 (function ($){
 	var uploader = function (dom, i, c) {
-		this.uploadButton = dom;
+		this.fileElement = dom;
 		this.index = i;
 		this.files = [];
 		this.config = $.uploader.defaults;
@@ -25,74 +25,32 @@
 						'" method="post" action=""  enctype="multipart/form-data" target="' + def.iframeName + 
 						'" style="display:inline-block;"></form>',
 				iframe = '<iframe name="' + def.iframeName + '" style="display:none"></iframe>',
-				file = $('#' + c.fileElement).clone();
+				file = self.fileElement.clone();
             if (!window.frames[c.iframeName]) {
                 $('body').append(iframe);
             }
-            fileDom = $('#' + c.fileElement);
+            fileDom = self.fileElement;
             formDom = fileDom.parents('form');
             if (formDom.length === 0) {
             	formDom = $(form).attr('action', c.url);
-	            $('#' + c.fileElement).replaceWith(formDom);
+	            self.fileElement.replaceWith(formDom);
 	            $('#' + formId).append(file);
+	            self.fileElement = file;
 	            generatedForm = true;
             }
-            $('#' + c.fileElement).change(function () {
+            self.fileElement.change(function () {
             	if (typeof(c.onSelect) === 'function') {
             		c.onSelect.call(self, $(this).val());
             	}
+            	if (!c.uploadTriggeredButton) {
+            		self.upload(generatedForm);
+            	}
             });
-
-            $(this.uploadButton).click(function (e) {
-            	var c = self.config;
-            	if ($('#' + c.fileElement).val().length === 0) {
-            		if (typeof(c.empty) === 'function') {
-            			c.empty();
-            		}
-            		return false;
-            	}
-            	if (typeof(c.beforeUpload) === 'function') {
-            		c.beforeUpload.call(self);
-            	}
-
-            	fileDom = $('#' + c.fileElement);
-	            formDom = fileDom.parents('form');
-	            if (!generatedForm) {
-	            	backup.id = formDom.attr('id');
-	            	backup.name = formDom.attr('name');
-	            	backup.action = formDom.attr('action');
-	            	backup.method = formDom.attr('method');
-	            	backup.enctype = formDom.attr('enctype');
-	            	backup.target = formDom.attr('target');
-
-	            	formDom.attr({
-	            		action: c.url,
-	            		enctype: 'multipart/form-data',
-	            		target: c.iframeName,
-	            		method: 'POST'
-	            	});
-	            }
-            	formDom.submit();
-            	// Has to use setTimeout.
-            	if (!generatedForm) {
-	            	setTimeout(function () {
-	            		for (key in backup) {
-		            		if (backup[key] === undefined) {
-		            			formDom.removeAttr(key);
-		            		} else {
-		            			formDom.attr(key, backup[key]);
-		            		}
-		            	}
-	            	}, 1000);
-            	}
-            	/*for (key in backup) {
-            		if (backup[key] === undefined) {
-            			formDom.removeAttr(key);
-            		} else {
-            			formDom.attr(key, backup[key]);
-            		}
-            	}*/
-            });
+            if (c.uploadTriggeredButton) {
+            	self.uploadButton = $('#' + c.uploadTriggeredButton).click(function (e) {
+	            	self.upload(generatedForm);
+	            });
+            }
 		},
 		options: function (c) {
 			this.config = $.extend(true, {}, this.config, c);
@@ -104,7 +62,7 @@
 		// It's a call back from the server,
 		success: function (rst) { 
 			var c = this.config, ul = null, li = null, len = 0, key = '', tmp = null, data = {}, me = null, self = this, a = null;
-			$('#' + c.fileElement).val('');
+			self.fileElement.val('');
 			if (typeof(c.dataFilter) === 'function') {
 				rst = c.dataFilter.call(self, rst);
 			}
@@ -112,10 +70,20 @@
 			if (c.list && c.list.element) {
 				ul = $('#' + c.list.element);
 				if (ul.length > 0) {
-					li = $('<li></li>');
-					if (rst.fileName) {
-						li.append(c.list.fileTemplate.replace('{name}', rst.fileName).replace('{size}', rst.fileSize));
-						ul.append(li);
+					li = $(c.list.liTemplate);
+					if (rst.id) {
+						tmp = c.list.fileTemplate.replace(/({[\w_].*?})/g, function (s) {
+						  	tmp = s.substr(1, s.length - 2);
+						    return rst[tmp] ? rst[tmp] : s;
+						});
+						li.append(tmp);
+						if ((typeof(c.list.insertWay) === 'function')) {
+							c.list.insertWay.call(self, ul, li);
+						} else if(c.list.insertWay === 'prepend') {
+							ul.prepend(li);
+						} else if (c.list.insertWay === 'append') {
+							ul.append(li);
+						}
 						if (c.list.allowDelete && rst.id) {
 							a = $(c.list.deleteButtonTemplate);
 							li.append(a);
@@ -168,7 +136,7 @@
 						}
 					}
 					for (key in rst) {
-						li.attr(key, rst.key);
+						li.attr(key, rst[key]);
 					}
 				}
 			}
@@ -189,6 +157,75 @@
 			if (typeof(c.afterUpload) === 'function') {
 				c.afterUpload.call(this, rst);
 			}
+		},
+		upload: function (generatedForm) {
+			var self = this, c = self.config, backup = {}, filename = self.fileElement.val();
+			generatedForm = (generatedForm === undefined);
+        	if (filename.length === 0) {
+        		if (typeof(c.empty) === 'function') {
+        			c.empty();
+        		}
+        		return false;
+        	}
+        	if (typeof(c.validate) === 'function') {
+        		if (!c.validate.call(self, filename))
+        			return false;
+        	} else {
+        		if (!this.validate(filename)) {
+        			if (typeof(c.onValidateFailed) === 'function') {
+        				c.onValidateFailed.call(self, filename);
+        			}
+        			return false;
+        		}
+        	}
+        	if (typeof(c.beforeUpload) === 'function') {
+        		c.beforeUpload.call(self);
+        	}
+
+        	fileDom = self.fileElement;
+            formDom = fileDom.parents('form');
+            if (!generatedForm) {
+            	backup.id = formDom.attr('id');
+            	backup.name = formDom.attr('name');
+            	backup.action = formDom.attr('action');
+            	backup.method = formDom.attr('method');
+            	backup.enctype = formDom.attr('enctype');
+            	backup.target = formDom.attr('target');
+
+            	formDom.attr({
+            		action: c.url,
+            		enctype: 'multipart/form-data',
+            		target: c.iframeName,
+            		method: 'POST'
+            	});
+            }
+        	formDom.submit();
+        	// Has to use setTimeout.
+        	if (!generatedForm) {
+            	setTimeout(function () {
+            		for (key in backup) {
+	            		if (backup[key] === undefined) {
+	            			formDom.removeAttr(key);
+	            		} else {
+	            			formDom.attr(key, backup[key]);
+	            		}
+	            	}
+            	}, 1000);
+        	}
+		},
+		validate: function (fileName) {
+			var self = this, c = self.config, allows = c.allowFiles, arr = [], i = 0, len = 0 , regx = '';
+			if (allows === '*')
+				return true;
+			arr = allows.split(',');
+			len = arr.length;
+			for (i = 0; i < len; i++) {
+				regx += '\.' + arr[i] + '|';
+			}
+			if (regx.length > 0)
+				regx = regx.substr(0, regx.length - 1);
+			regx = new RegExp('(' + regx + ')$');
+			return regx.test(fileName.toLowerCase());
 		}
 	};
 
@@ -200,13 +237,21 @@
 		// The form id
 		formId: 'ju_frm_file',		
 		// Upload process
-		url: 'upload.php',		
+		url: 'upload.php',
+		// Set to * means allow all files.
+		allowFiles: '*',
+		// When validate failed, this funciton will run
+		onValidateFailed: null,
 		// Set to false, will not show the uploaded files list
 		list: {		
 			// The <ul> to show the uploaded files
 			element: '',
+			// Insert way
+			insertWay: 'append',
 			// Show the delete button for each file
 			allowDelete: true,
+			// The html template for the li
+			liTemplate: '<li></li>',
 			// The html template for the file.
 			fileTemplate: '<span>{name}</span>',
 			// The html template for the delete button
@@ -233,6 +278,8 @@
 			onRemoveSuccess: function (eventSource, id, item, ajaxReturn) { return true;},
 		},
 		listElement: false,
+		// Upload triggered by, when set to false, it's triggered by himself.
+		uploadTriggeredButton: false,
 		// Before File upload will cause this event, no matter it's successfull or failed
 		beforeUpload: function () {
 			$(this.uploadButton).hide().after('<span class="ju-uploading"></span>');
