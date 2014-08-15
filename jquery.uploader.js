@@ -60,7 +60,8 @@
 			return this.files;
 		},
 		// It's a call back from the server,
-		success: function (rst) { 
+		success: function (rst) {
+			var c = this.config;
 			this.addFile(rst);
 			if (typeof(c.success) === 'function') {
 				c.success.call(this, rst);
@@ -153,6 +154,9 @@
 					}
 					for (key in rst) {
 						li.attr(key, rst[key]);
+					}
+					if (typeof(c.afterInsert) === 'function') {
+						c.afterInsert.call(self, li, rst);
 					}
 				}
 			}
